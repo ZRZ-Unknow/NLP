@@ -95,13 +95,12 @@ def main_loop():
     with open(dic_path,'r') as f:
         dic = f.read().split()
     with open(dic_path2,'r') as f:
-        dic.append(f.read().split())
+        dic += f.read().split()
     with open(data_path,'r') as f:
         data = f.read().split("\n")
     fmm = FMM(dic)
    # s = input_()
     #print(fmm.cut(s,8))
-    
     manager = Manager()
     core_num = args.threads
     return_dict = manager.dict()
