@@ -5,7 +5,7 @@ import multiprocessing
 from multiprocessing import Process,Lock,Pool,Manager
 import argparse,re,psutil
 
-class FMM(object):   
+class FFMM(object):   
     '''Forward Maximum Match'''
     def __init__(self, dic):
         self.dic = dic
@@ -122,7 +122,7 @@ def main_loop():
     dic_path = "./cws_dataset/train.txt"
     dic_path2 = "./cws_dataset/dev.txt"
     dic_path3 = "./cws_dataset/pku_training.txt"
-    data_path = "./cws_dataset/text.txt"
+    data_path = "./cws_dataset/test.txt"
     res_path = "./cws_dataset/181220076.txt"
     dic = []
     data = []
@@ -130,11 +130,11 @@ def main_loop():
         dic = f.read().split()
     with open(dic_path2,'r') as f:
         dic += f.read().split()
-    with open(dic_path3,'r') as f:
-        dic += f.read().split()
     if args.use_pku:
-        with open(data_path,'r') as f:
-            data = f.read().split("\n")
+        with open(dic_path3,'r') as f:
+            dic += f.read().split()
+    with open(data_path,'r') as f:
+        data = f.read().split("\n")
     fmm = FMM(dic)
     #s = input_()
     #print(fmm.cut(s,8))
@@ -158,7 +158,6 @@ def main_loop():
     p.join()
     print((time.time()-t1)/60)
     with open(res_path,"w") as f:
-        f.write("\n")
         for i in range(core_num):
             for j in range(len(return_dict[i])):
                 f.writelines(return_dict[i][j])
@@ -166,9 +165,6 @@ def main_loop():
                     pass
                 else:
                     f.write("\n")
-
-
-
 
 
 

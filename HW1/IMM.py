@@ -4,7 +4,8 @@ import multiprocessing
 from multiprocessing import Process,Lock,Pool,Manager
 import argparse,re,psutil
 from collections import defaultdict
-class FMM(object):   
+
+class IMM(object):   
     '''Forward Maximum Match'''
     def __init__(self, dic):
         self.dic = dic
@@ -26,8 +27,8 @@ class FMM(object):
         #pattern_time = "[0-9]{0,2}:[0-9]{2}"
         #pattern_url = "www.[0-9a-zA-Z.]+"
         #pattern_email = "[0-9a-zA-Z\_]+[@][0-9a-zA-Z\.]+"
-        #pattern = ["[0-9a-zA-Z\_]+[@]{1,1}[0-9a-zA-Z]+", "www.[0-9a-zA-Z.]+","[0-9a-zA-Z.]+.com","[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]#"[a-zA-Z]+","[0-9.]+"]
-        pattern = ["(www.)?[0-9a-zA-Z\_]+(@)?[0-9a-zA-Z]+(.com)?(.cn)?", "[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]
+        pattern = ["[0-9a-zA-Z\_]+[@]{1,1}[0-9a-zA-Z]+", "www.[0-9a-zA-Z.]+","[0-9a-zA-Z.]+.com","[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]#"[a-zA-Z]+","[0-9.]+"]
+        #pattern = ["(www.)?[0-9a-zA-Z\_]+(@)?[0-9a-zA-Z]+(.com)?(.cn)?", "[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]
         for i in range(len(pattern)):
             #print(text)
             tmp = re.finditer(pattern[i],text)
@@ -36,47 +37,49 @@ class FMM(object):
                 #print(pattern[i],group)
                 if i==len(pattern)-1:
                     if text[b:e].isdigit() or not text[b:e].isalnum():
-                        if e!=len(text) and text[e] in  "%时年月日亿万后千点号多":
+                        if e!=len(text) and text[e] in  "%时年月日后亿万千点号多":
                             e += 1
                 if self.is_cover(b,e,rm_list)==None:
                     rm_list.append((b,e))
         #print(rm_list)
+        rm_list.sort(reverse=True)
         return rm_list
 
     def cut(self,text,max_len):
         rm_list = self.regular_match(text)
         res = []
-        beginp = 0
-        endp = max_len
+        beginp = len(text)-max_len
+        endp = len(text)
         while True:
-            if beginp >= len(text):
+            if endp <= 0:
                 break
-            tokenp = self.is_cover(beginp,beginp+max_len-1,rm_list)
+            tokenp = self.is_cover(endp-max_len,endp,rm_list)
             if tokenp != None:
-                if beginp == tokenp[0]:
+                if endp == tokenp[1]:
                     res.append(text[tokenp[0]:tokenp[1]]+" ")
                     rm_list.remove(tokenp)
-                    beginp = tokenp[1]
+                    endp = tokenp[0]
                     continue
                 else:
-                    margin = tokenp[0]-beginp
+                    margin = endp - tokenp[1]
                     for i in range(margin,0,-1):
-                        if text[beginp:beginp+i] in self.dic[i]:
-                            res.append(text[beginp:beginp+i]+" ")
-                            beginp += i
+                        if text[endp-i:endp] in self.dic[i]:
+                            res.append(text[endp-i:endp]+" ")
+                            endp -= i
                             break
                         if i==1:
-                            res.append(text[beginp:beginp+i]+" ")
-                            beginp += i
+                            res.append(text[endp-i:endp]+" ")
+                            endp -= i
             else:
                 for i in range(max_len,0,-1):
-                    if text[beginp:beginp+i] in self.dic[i]:
-                        res.append(text[beginp:beginp+i]+" ")
-                        beginp += i
+                    if text[endp-i:endp] in self.dic[i]:
+                        res.append(text[endp-i:endp]+" ")
+                        endp -= i
                         break
                     if i==1:
-                        res.append(text[beginp:beginp+i]+" ")
-                        beginp += i
+                        res.append(text[endp-i:endp]+" ")
+                        endp -= i
+        res.reverse()
         return res
 
 def input_():
@@ -96,7 +99,7 @@ def main_loop():
     parser = argparse.ArgumentParser()
     parser.add_argument("--nthreads",default=1,type=int)
     parser.add_argument("--max_len",default=8,type=int)
-    parser.add_argument("--use_extra",default=0,type=int)
+    parser.add_argument("--use_extra",default=False,type=bool)
     args = parser.parse_args()
 
     dic_path = "./cws_dataset/train.txt"
@@ -113,7 +116,7 @@ def main_loop():
         dic_tmp = f.read().split()
     with open(dic_path2,'r') as f:
         dic_tmp += f.read().split()
-    if args.use_extra==1:
+    if args.use_extra:
         print("use extra dict")
         with open(dic_path3,'r') as f:
             dic_tmp += f.read().split()
@@ -131,7 +134,7 @@ def main_loop():
     for i in range(1,max_dic_len+1 if max_dic_len<args.max_len else args.max_len+1):
         dic.setdefault(i,[x for x in dic_tmp if len(x)==i])
     
-    fmm = FMM(dic)
+    fmm = IMM(dic)
     #s = input_()
     #print(fmm.cut(s,8))
     '''m = max([len(x) for x in dic])-18   #9 晚安大鱿鱼
@@ -149,7 +152,7 @@ def main_loop():
         if cpu<core_num-1 :
             p.apply_async(multi_proc,args=[fmm,cpu,data[cpu*N:(cpu+1)*N],return_dict])
         else :
-            p.apply_async(multi_proc,args=[fmm,cpu,data[cpu*N:],return_dict])
+            p.apply_async(multi_proc,args=[fmm,cpu,data[cpu*N:(cpu+1)*N],return_dict])
     p.close()
     p.join()
     print((time.time()-t1)/60)
@@ -196,8 +199,7 @@ def re_ma():
     max_dic_len = max([len(x) for x in dic_tmp])
     for i in range(1,max_dic_len+1 if max_dic_len<args.max_len else args.max_len+1):
         dic.setdefault(i,[x for x in dic_tmp if len(x)==i])
-    
-    fmm = FMM(dic)
+    fmm = IMM(dic)
     s = input_()
     print(fmm.cut(s,8))
 
