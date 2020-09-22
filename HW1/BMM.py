@@ -8,21 +8,20 @@ import argparse,re,psutil
 from FMM import FMM
 from IMM import IMM
 
-# pattern = "《》"
 
 
 def input_():
     s = input("Input:")
     return s
-def multi_proc(fmm,imm,cpu,data,max_len,return_dict):
+
+def multi_proc(alg,cpu,data,max_len,return_dict):
     res = []
     for i in range(len(data)):
-        s1 = fmm.cut(data[i],max_len)
-        s2 = imm.cut(data[i],max_len)
-        if len(s2)<=len(s1):
-            res.append(s2)
-        else:
-            res.append(s1)
+        s = []
+        for x in alg:
+            s.append(x.cut(data[i],max_len))
+        _ , ss = min([(len(x),x) for x in s])
+        res.append(ss)
         if i%100==0:
             print(i,cpu)
     return_dict[cpu] = res
@@ -31,47 +30,23 @@ def main_loop():
     parser = argparse.ArgumentParser()
     parser.add_argument("--nthreads",default=1,type=int)
     parser.add_argument("--max_len",default=8,type=int)
-    parser.add_argument("--use_extra",default=0,type=int)
+    parser.add_argument("--use_extra",action="store_true",default=False)
     parser.add_argument("--alg",type=str,default="FMM",choices=["FMM","IMM","BMM"])
+    parser.add_argument("--input",action="store_true",default=False)
     args = parser.parse_args()
 
-    '''dic_path1 = "./cws_dataset/train.txt"
-    dic_path2 = "./cws_dataset/dev.txt"
-    dic_path3 = "./cws_dataset/pku_training.txt"
-    dic_path4 = "./cws_dataset/regions.txt"
-    dic_path5 = "./cws_dataset/famous_people.txt"
-    dic_path6 = "./cws_dataset/food.txt"
-    dic_path7 = "./cws_dataset/locations.txt"
-    dic_path8 = "./cws_dataset/locations_2.txt"'''
     data_path = "./cws_dataset/test.txt"
     res_path = "./cws_dataset/181220076.txt"
     dic_path = ["./cws_dataset/train.txt","./cws_dataset/dev.txt","./cws_dataset/pku_training.txt",
                 "./cws_dataset/regions.txt","./cws_dataset/famous_people.txt", "./cws_dataset/food.txt",
-                "./cws_dataset/locations.txt","./cws_dataset/idioms.txt","./cws_dataset/locations_2.txt","./cws_dataset/global_locations.txt",
-                "./cws_dataset/idioms_2.txt",]        #0.88329
+                "./cws_dataset/locations.txt","./cws_dataset/idioms.txt","./cws_dataset/locations_2.txt",
+                "./cws_dataset/global_locations.txt", "./cws_dataset/idioms_2.txt","./cws_dataset/vegetable_bank.txt",
+                "./cws_dataset/food_bank.txt","./cws_dataset/dieci_bank.txt","./cws_dataset/road_bank.txt"]        #0.88405
     dic_tmp = []
     data = []
-    for i in range(len(dic_path) if args.use_extra==1 else 2):
+    for i in range(len(dic_path) if args.use_extra else 2):
         with open(dic_path[i],'r',encoding="utf-8") as f:
             dic_tmp += f.read().split()
-    '''with open(dic_path,'r',encoding="utf-8") as f:
-        dic_tmp = f.read().split()
-    with open(dic_path2,'r',encoding="utf-8") as f:
-        dic_tmp += f.read().split()
-    if args.use_extra==1:
-        print("use extra dict")
-        with open(dic_path3,'r',encoding="utf-8") as f:
-            dic_tmp += f.read().split()
-        with open(dic_path4,'r',encoding="utf-8") as f:
-            dic_tmp += f.read().split()
-        with open(dic_path5,'r',encoding="utf-8") as f:
-            dic_tmp += f.read().split()
-        with open(dic_path6,'r',encoding="utf-8") as f:
-            dic_tmp += f.read().split()
-        with open(dic_path7,'r',encoding="utf-8") as f:
-            dic_tmp += f.read().split()
-        with open(dic_path8,'r',encoding="utf-8") as f:
-            dic_tmp += f.read().split()'''
     with open(data_path,'r',encoding="utf-8") as f:
         data = f.read().split("\n")
 
@@ -79,11 +54,29 @@ def main_loop():
     max_dic_len = max([len(x) for x in dic_tmp])
     for i in range(1,max_dic_len+1 if max_dic_len<args.max_len else args.max_len+1):
         dic.setdefault(i,[x for x in dic_tmp if len(x)==i])
-    fmm = FMM(dic)
-    imm = IMM(dic)
-    #s = input_()
-    #print(fmm.cut(s,8))
-    #assert(0)
+    
+    alg = []
+    if args.alg=="FMM":
+        fmm = FMM(dic)
+        alg.append(fmm)
+    elif args.alg == "IMM":
+        imm = IMM(dic)
+        alg.append(imm)
+    elif args.alg == "BMM":
+        fmm = FMM(dic)
+        imm = IMM(dic)
+        alg.append(fmm)
+        alg.append(imm)
+
+    if args.input:
+        while True:
+            s = input("Input:")
+            if s=="quit()":
+                break
+            for i in alg:
+                print(i.get_name()+":" , i.cut(s,8))
+        return
+
     manager = Manager()
     core_num = args.nthreads
     return_dict = manager.dict()
@@ -93,12 +86,12 @@ def main_loop():
     print(len(data),N,core_num)
     for cpu in range(core_num):
         if cpu<core_num-1 :
-            p.apply_async(multi_proc,args=[fmm,imm,cpu,data[cpu*N:(cpu+1)*N],args.max_len,return_dict])
+            p.apply_async(multi_proc,args=[alg,cpu,data[cpu*N:(cpu+1)*N],args.max_len,return_dict])
         else :
-            p.apply_async(multi_proc,args=[fmm,imm,cpu,data[cpu*N:],args.max_len,return_dict])
+            p.apply_async(multi_proc,args=[alg,cpu,data[cpu*N:],args.max_len,return_dict])
     p.close()
     p.join()
-    print((time.time()-t1)/60)
+    print("Time-used(min):",(time.time()-t1)/60)
     with open(res_path,"w",encoding="utf-8") as f:
         for i in range(core_num):
             for j in range(len(return_dict[i])):

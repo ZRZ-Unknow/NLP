@@ -1,16 +1,14 @@
 import numpy as np
-import os,sys,time,copy
-import multiprocessing
-from multiprocessing import Process,Lock,Pool,Manager
-import argparse,re,psutil
+import os,sys,time,copy,re
 from collections import defaultdict
+
 class FMM(object):   
     '''Forward Maximum Match'''
     def __init__(self, dic):
         self.dic = dic
     
-    def print_(self):
-        print(self.dic[-9:])
+    def get_name(self):
+        return "FMM"
    
     def is_cover(self,beginp,endp,rm_list):
         for (b,e) in rm_list:
@@ -21,26 +19,18 @@ class FMM(object):
     def regular_match(self,text_):
         text = copy.deepcopy(text_)
         rm_list = []
-        #pattern_digit = "[0-9.]+"
-        #pattern_alpha = "[a-zA-Z]+"
-        #pattern_time = "[0-9]{0,2}:[0-9]{2}"
-        #pattern_url = "www.[0-9a-zA-Z.]+"
-        #pattern_email = "[0-9a-zA-Z\_]+[@][0-9a-zA-Z\.]+"
-        #pattern = ["[0-9a-zA-Z\_]+[@]{1,1}[0-9a-zA-Z]+", "www.[0-9a-zA-Z.]+","[0-9a-zA-Z.]+.com","[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]#"[a-zA-Z]+","[0-9.]+"]
-        pattern = ["(www.)?[0-9a-zA-Z\_]+(@)?[0-9a-zA-Z]+(.com)?(.cn)?", "[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]
+        pattern = ["[0-9a-zA-Z\_]+[@]{1,1}[0-9a-zA-Z]+", "www.[0-9a-zA-Z.]+","[0-9a-zA-Z.]+.com","[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]#"[a-zA-Z]+","[0-9.]+"]
+        #pattern = ["(www.)?[0-9a-zA-Z\_]+(@)?[0-9a-zA-Z]+(.com)?(.cn)?", "[0-9]{0,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]
         for i in range(len(pattern)):
-            #print(text)
             tmp = re.finditer(pattern[i],text)
             for group in tmp:
                 b,e = group.span()
-                #print(pattern[i],group)
                 if i==len(pattern)-1:
                     if text[b:e].isdigit() or not text[b:e].isalnum():
                         if e!=len(text) and text[e] in  "%时年月日亿万后千点号多":
                             e += 1
                 if self.is_cover(b,e,rm_list)==None:
                     rm_list.append((b,e))
-        #print(rm_list)
         return rm_list
 
     def cut(self,text,max_len):
@@ -78,7 +68,7 @@ class FMM(object):
                         res.append(text[beginp:beginp+i]+" ")
                         beginp += i
         return res
-
+'''
 def input_():
     s = input("Input:")
     return s
@@ -134,10 +124,10 @@ def main_loop():
     fmm = FMM(dic)
     #s = input_()
     #print(fmm.cut(s,8))
-    '''m = max([len(x) for x in dic])-18   #9 晚安大鱿鱼
+    m = max([len(x) for x in dic])-18   #9 晚安大鱿鱼
     for i in range(len(dic)):
         if len(dic[i])==m:
-            print(m,dic[i])'''
+            print(m,dic[i])
     manager = Manager()
     core_num = args.nthreads
     return_dict = manager.dict()
@@ -203,4 +193,4 @@ def re_ma():
 
 if __name__ == '__main__':
     main_loop()
-    #re_ma()
+    #re_ma()'''
