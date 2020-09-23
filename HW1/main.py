@@ -19,14 +19,12 @@ def multi_proc(alg,cpu,data,max_len,return_dict):
             s.append(x.cut(data[i],max_len))
         _ , ss = min([(len(x),x) for x in s])
         res.append(ss)
-        if i%100==0:
-            print(i,cpu)
     return_dict[cpu] = res
 
 def main_loop():
     parser = argparse.ArgumentParser()
     parser.add_argument("--nthreads",default=1,type=int)
-    parser.add_argument("--max_len",default=8,type=int)
+    parser.add_argument("--max_len",default=12,type=int)
     parser.add_argument("--use_extra",action="store_true",default=False)
     parser.add_argument("--alg",type=str,default="FMM",choices=["FMM","IMM","BMM"])
     parser.add_argument("--input",action="store_true",default=False)
@@ -35,23 +33,25 @@ def main_loop():
     data_path = "./cws_dataset/test.txt"
     res_path = "./cws_dataset/res/181220076.txt"
     dic_path = ["./cws_dataset/train.txt","./cws_dataset/dev.txt","./cws_dataset/pku_training.txt",
-                "./cws_dataset/regions.txt","./cws_dataset/famous_people.txt", "./cws_dataset/food.txt",
-                "./cws_dataset/locations.txt","./cws_dataset/idioms.txt","./cws_dataset/locations_2.txt",
-                "./cws_dataset/global_locations.txt", "./cws_dataset/idioms_2.txt","./cws_dataset/vegetable_bank.txt",
-                "./cws_dataset/food_bank.txt","./cws_dataset/dieci_bank.txt","./cws_dataset/road_bank.txt"]        #0.88405
+                "./cws_dataset/regions.txt","./cws_dataset/famous_people.txt", "./cws_dataset/THUCNEWS.txt",
+                "./cws_dataset/locations.txt","./cws_dataset/idioms.txt","./cws_dataset/global_locations.txt", 
+                "./cws_dataset/idioms_2.txt","./cws_dataset/vegetable_bank.txt","./cws_dataset/food_bank.txt",
+                "./cws_dataset/dieci_bank.txt","./cws_dataset/road_bank.txt","./cws_dataset/trainCorpus.txt",
+                "./cws_dataset/English_Cn_Name_Corpus（48W）.txt","./cws_dataset/Japanese_Names_Corpus（18W）.txt",
+                "./cws_dataset/citys.txt",]      
     dic_tmp = []
     data = []
     for i in range(len(dic_path) if args.use_extra else 2):
         with open(dic_path[i],'r',encoding="utf-8") as f:
             dic_tmp += f.read().split()
+    
     with open(data_path,'r',encoding="utf-8") as f:
         data = f.read().split("\n")
 
-    dic = defaultdict(list)
+    dic = defaultdict(set)
     max_dic_len = max([len(x) for x in dic_tmp])
     for i in range(1,max_dic_len+1 if max_dic_len<args.max_len else args.max_len+1):
-        dic.setdefault(i,[x for x in dic_tmp if len(x)==i])
-    
+        dic.setdefault(i,set([x for x in dic_tmp if len(x)==i]))
     alg = []
     if args.alg=="FMM":
         fmm = FMM(dic)
@@ -71,7 +71,7 @@ def main_loop():
             if s=="quit()":
                 break
             for i in alg:
-                print(i.get_name()+":" , i.cut(s,8))
+                print(i.get_name()+":" , i.cut(s,args.max_len))
         return
 
     manager = Manager()
@@ -88,7 +88,7 @@ def main_loop():
             p.apply_async(multi_proc,args=[alg,cpu,data[cpu*N:],args.max_len,return_dict])
     p.close()
     p.join()
-    print("Time-used(minutes):",(time.time()-t1)/60)
+    print("Time-used(seconds):",(time.time()-t1))
     with open(res_path,"w",encoding="utf-8") as f:
         for i in range(core_num):
             for j in range(len(return_dict[i])):
@@ -97,6 +97,7 @@ def main_loop():
                     pass
                 else:
                     f.write("\n")
+    print("done")
 
 
 if __name__=="__main__":
