@@ -89,6 +89,7 @@ def main_loop():
     p.close()
     p.join()
     print("Time-used(seconds):",(time.time()-t1))
+    print("generating result file...")
     with open(res_path,"w",encoding="utf-8") as f:
         for i in range(core_num):
             for j in range(len(return_dict[i])):
