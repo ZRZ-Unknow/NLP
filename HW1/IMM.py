@@ -51,7 +51,7 @@ class IMM(object):
                 else:
                     margin = endp - tokenp[1]
                     for i in range(margin,0,-1):
-                        if text[endp-i:endp] in self.dic[i]:
+                        if text[endp-i:endp] in self.dic[i] and text[endp-i:endp]!="这个":
                             res.append(text[endp-i:endp]+" ")
                             endp -= i
                             break
@@ -60,7 +60,7 @@ class IMM(object):
                             endp -= i
             else:
                 for i in range(max_len,0,-1):
-                    if text[endp-i:endp] in self.dic[i]:
+                    if text[endp-i:endp] in self.dic[i] and text[endp-i:endp]!="这个":
                         res.append(text[endp-i:endp]+" ")
                         endp -= i
                         break
