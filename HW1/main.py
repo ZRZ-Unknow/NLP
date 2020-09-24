@@ -17,8 +17,20 @@ def multi_proc(alg,cpu,data,max_len,return_dict):
         s = []
         for x in alg:
             s.append(x.cut(data[i],max_len))
-        _ , ss = min([(len(x),x) for x in s])
-        res.append(ss)
+        if len(s)==1:
+            res.append(s[0])
+        elif len(s)==2:
+            if s[0] == s[1]:
+                res.append(s[0])
+            else:
+                count0 = len([x for x in s[0] if len(x)==2])
+                count1 = len([x for x in s[1] if len(x)==2])
+                if count0<=count1:
+                    res.append(s[0])
+                else:
+                    res.append(s[1])
+        else:
+            assert(0)
     return_dict[cpu] = res
 
 def main_loop():

@@ -26,7 +26,7 @@ class IMM(object):
                 b,e = group.span()
                 if i==len(pattern)-1:
                     if text[b:e].isdigit() or not text[b:e].isalnum():
-                        if e!=len(text) and text[e] in  "%时年月日后亿万千点号多":
+                        if e!=len(text) and text[e] in  "%时年月日后亿万千点号多余":
                             e += 1
                 if self.is_cover(b,e,rm_list)==None:
                     rm_list.append((b,e))
