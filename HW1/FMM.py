@@ -26,7 +26,9 @@ class FMM(object):
                 b,e = group.span()
                 if i==len(pattern)-1:
                     if text[b:e].isdigit() or not text[b:e].isalnum():
-                        if e!=len(text) and text[e] in  "%时年月日亿万后千点号多余":
+                        if e<len(text)-1 and text[e] in "万" and text[e+1] in "余":
+                            e += 2
+                        elif e!=len(text) and text[e] in  "%时年月日亿万后千点号多余":
                             e += 1
                 if self.is_cover(b,e,rm_list)==None:
                     rm_list.append((b,e))
