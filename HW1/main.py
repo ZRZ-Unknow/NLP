@@ -50,7 +50,7 @@ def main_loop():
                 "./cws_dataset/idioms_2.txt","./cws_dataset/vegetable_bank.txt","./cws_dataset/food_bank.txt",
                 "./cws_dataset/dieci_bank.txt","./cws_dataset/road_bank.txt","./cws_dataset/trainCorpus.txt",
                 "./cws_dataset/English_Cn_Name_Corpus（48W）.txt","./cws_dataset/Japanese_Names_Corpus（18W）.txt",
-                "./cws_dataset/citys.txt",]      
+                "./cws_dataset/citys.txt","./cws_dataset/THUOCL_chengyu.txt"]      
     dic_tmp = []
     data = []
     for i in range(len(dic_path) if args.use_extra else 2):
@@ -64,6 +64,9 @@ def main_loop():
     max_dic_len = max([len(x) for x in dic_tmp])
     for i in range(1,max_dic_len+1 if max_dic_len<args.max_len else args.max_len+1):
         dic.setdefault(i,set([x for x in dic_tmp if len(x)==i]))
+    with open("./cws_dataset/cname.txt",'r',encoding="utf-8") as f:
+        dic.setdefault("name",set(f.read().split()))
+    
     alg = []
     if args.alg=="FMM":
         fmm = FMM(dic)
