@@ -86,11 +86,11 @@ class FMM(object):
             if res[i].strip() in self.dic["name"]:
                 j = i
                 tmp = res[i]
-                if i+1<len(res) and len(res[i+1])==2:
+                if i+1<len(res) and len(res[i+1])==2 and res[i+1].strip() not in "《：:,，.。?？":
                     j = i+1
                     tmp = tmp.strip()
                     tmp += res[i+1]
-                    if i+2<len(res) and len(res[i+2])==2:
+                    if i+2<len(res) and len(res[i+2])==2 and res[i+2].strip() not in "《：:,，.。?？":
                         j = i+2
                         tmp = tmp.strip()
                         tmp += res[i+2]
