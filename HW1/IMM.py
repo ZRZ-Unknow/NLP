@@ -36,6 +36,7 @@ class IMM(object):
         return rm_list
 
     def cut(self,text,max_len):
+        magic_word=["这个","一个","不是","一次","这是"]
         rm_list = self.regular_match(text)
         res = []
         beginp = len(text)-max_len
@@ -53,7 +54,7 @@ class IMM(object):
                 else:
                     margin = endp - tokenp[1]
                     for i in range(margin,0,-1):
-                        if text[endp-i:endp] in self.dic[i] and text[endp-i:endp]!="这个":
+                        if text[endp-i:endp] in self.dic[i] and text[endp-i:endp] not in magic_word:
                             res.append(text[endp-i:endp]+" ")
                             endp -= i
                             break
@@ -62,7 +63,7 @@ class IMM(object):
                             endp -= i
             else:
                 for i in range(max_len,0,-1):
-                    if text[endp-i:endp] in self.dic[i] and text[endp-i:endp]!="这个":
+                    if text[endp-i:endp] in self.dic[i] and text[endp-i:endp] not in magic_word:
                         res.append(text[endp-i:endp]+" ")
                         endp -= i
                         break

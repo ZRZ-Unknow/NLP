@@ -35,6 +35,7 @@ class FMM(object):
         return rm_list
 
     def cut(self,text,max_len):
+        magic_word=["这个","一个","不是","一次","这是"]
         rm_list = self.regular_match(text)
         res = []
         beginp = 0
@@ -52,7 +53,7 @@ class FMM(object):
                 else:
                     margin = tokenp[0]-beginp
                     for i in range(margin,0,-1):
-                        if text[beginp:beginp+i] in self.dic[i] and text[beginp:beginp+i]!="这个":
+                        if text[beginp:beginp+i] in self.dic[i] and text[beginp:beginp+i] not in magic_word:
                             res.append(text[beginp:beginp+i]+" ")
                             beginp += i
                             break
@@ -61,7 +62,7 @@ class FMM(object):
                             beginp += i
             else:
                 for i in range(max_len,0,-1):
-                    if text[beginp:beginp+i] in self.dic[i] and text[beginp:beginp+i]!="这个":
+                    if text[beginp:beginp+i] in self.dic[i] and text[beginp:beginp+i] not in magic_word:
                         res.append(text[beginp:beginp+i]+" ")
                         beginp += i
                         break
