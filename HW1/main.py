@@ -3,12 +3,10 @@ import os,sys,time,copy
 import multiprocessing
 from multiprocessing import Process,Lock,Pool,Manager
 from collections import defaultdict
-import argparse,re
+import argparse,re,random
 
 from FMM import FMM
 from IMM import IMM
-
-
 
 
 def multi_proc(alg,cpu,data,max_len,return_dict):
@@ -30,33 +28,41 @@ def multi_proc(alg,cpu,data,max_len,return_dict):
                 else:
                     res.append(s[1])
         else:
-            assert(0)
+            pass
     return_dict[cpu] = res
 
-def main_loop():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--nthreads",default=1,type=int)
-    parser.add_argument("--max_len",default=12,type=int)
-    parser.add_argument("--use_extra",action="store_true",default=False)
-    parser.add_argument("--alg",type=str,default="FMM",choices=["FMM","IMM","BMM"])
-    parser.add_argument("--input",action="store_true",default=False)
-    args = parser.parse_args()
 
+
+def main_loop():
+    '''set seed'''
+    random.seed(1)
+
+    '''parse args'''
+    parser = argparse.ArgumentParser(description="Chinese Words-Cut Implement")
+    parser.add_argument("--nthreads",type=int,default=4,help="num of threads")
+    parser.add_argument("--max_len",type=int,default=12,help="max match lenth when cutting words")
+    parser.add_argument("--alg",type=str,default="BMM",choices=["FMM","IMM","BMM"],help="algorithms")
+    parser.add_argument("--input",action="store_true",default=False,help="input mode for debug")
+    args = parser.parse_args()
+    
+    '''load data and generate dict'''
     data_path = "./cws_dataset/test.txt"
     res_path = "./cws_dataset/res/181220076.txt"
-    dic_path = ["./cws_dataset/train.txt","./cws_dataset/dev.txt","./cws_dataset/pku_training.txt",
-                "./cws_dataset/regions.txt","./cws_dataset/famous_people.txt", "./cws_dataset/THUCNEWS.txt",
-                "./cws_dataset/locations.txt","./cws_dataset/idioms.txt","./cws_dataset/global_locations.txt", 
-                "./cws_dataset/idioms_2.txt","./cws_dataset/vegetable_bank.txt","./cws_dataset/food_bank.txt",
-                "./cws_dataset/dieci_bank.txt","./cws_dataset/road_bank.txt","./cws_dataset/trainCorpus.txt",
-                "./cws_dataset/English_Cn_Name_Corpus（48W）.txt","./cws_dataset/Japanese_Names_Corpus（18W）.txt",
-                "./cws_dataset/citys.txt","./cws_dataset/THUOCL_chengyu.txt"]      
+    name_dic_path = "./cws_dataset/cname.txt"
+    train_data_path = ["./cws_dataset/train.txt","./cws_dataset/dev.txt"]
+    dic_path = os.listdir("./cws_dataset")
+    dic_path.remove("test.txt")
+    dic_path.remove("res")
     dic_tmp = []
     data = []
-    for i in range(len(dic_path) if args.use_extra else 2):
-        with open(dic_path[i],'r',encoding="utf-8") as f:
+    train_data = []
+    print("loading data...")
+    for i in range(len(dic_path)):
+        with open("./cws_dataset/"+dic_path[i],'r',encoding="utf-8") as f:
             dic_tmp += f.read().split()
-    
+    for i in range(2):
+        with open(train_data_path[i],'r',encoding="utf-8") as f:
+            train_data += f.read().split("\n")
     with open(data_path,'r',encoding="utf-8") as f:
         data = f.read().split("\n")
 
@@ -64,38 +70,59 @@ def main_loop():
     max_dic_len = max([len(x) for x in dic_tmp])
     for i in range(1,max_dic_len+1 if max_dic_len<args.max_len else args.max_len+1):
         dic.setdefault(i,set([x for x in dic_tmp if len(x)==i]))
-    with open("./cws_dataset/cname.txt",'r',encoding="utf-8") as f:
+    with open(name_dic_path,'r',encoding="utf-8") as f:
         dic.setdefault("name",set(f.read().split()))
     
+    '''find magic word'''
+    magic_word = []
+    train_data_set = set()
+    for i in range(len(train_data)):
+        s = train_data[i].split()
+        for j in range(len(s)):
+            train_data_set.add(s[j])
+            if j+1<len(s) and len(s[j])==1 and len(s[j+1])==1:
+                scat = s[j]+s[j+1]
+                if scat in dic[2] and scat not in magic_word:
+                    magic_word.append(scat)
+    for mw in copy.deepcopy(magic_word):
+        if mw in train_data_set:
+            magic_word.remove(mw)
+    magic_word = sorted(magic_word)
+    magic_word = set(magic_word[:760])     
+    #750:0.909647,760:0.911281,700:0.908953,所:0.912802,800:0.912510,780:0.912328,770:0.912250
+
+    '''algorithm''' 
     alg = []
     if args.alg=="FMM":
-        fmm = FMM(dic)
+        fmm = FMM(dic,magic_word)
         alg.append(fmm)
     elif args.alg == "IMM":
-        imm = IMM(dic)
+        imm = IMM(dic,magic_word)
         alg.append(imm)
     elif args.alg == "BMM":
-        fmm = FMM(dic)
-        imm = IMM(dic)
+        fmm = FMM(dic,magic_word)
+        imm = IMM(dic,magic_word)
         alg.append(fmm)
         alg.append(imm)
-
+    
+    '''input mode for debug, input 'quit()' to quit'''
     if args.input:
         while True:
             s = input("Input:")
-            if s=="quit()":
+            if s=="quit()": 
                 break
             for i in alg:
                 print(i.get_name()+":" , i.cut(s,args.max_len))
         return
-
+    
+    '''cut the test data, use multiprocessing'''
     manager = Manager()
     core_num = args.nthreads
     return_dict = manager.dict()
     t1=time.time()
     p = Pool(core_num)
     N = int(len(data)/core_num)
-    print("processing...")
+    print("multiprocessing...")
     for cpu in range(core_num):
         if cpu<core_num-1 :
             p.apply_async(multi_proc,args=[alg,cpu,data[cpu*N:(cpu+1)*N],args.max_len,return_dict])

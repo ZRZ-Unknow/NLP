@@ -3,9 +3,10 @@ import os,sys,time,copy,re
 from collections import defaultdict
 
 class IMM(object):   
-    '''Forward Maximum Match'''
-    def __init__(self, dic):
+    '''Inverse Maximum Match'''
+    def __init__(self, dic, magic_word):
         self.dic = dic
+        self.magic_word = magic_word
     
     def get_name(self):
         return "IMM"
@@ -18,8 +19,8 @@ class IMM(object):
     
     def regular_match(self,text_):
         text = copy.deepcopy(text_)
-        rm_list = []
-        pattern = ["[0-9a-zA-Z\_]+[@]{1,1}[0-9a-zA-Z]+", "www.[0-9a-zA-Z.]+","[0-9a-zA-Z.]+.com","[0-9]{1,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]#"[a-zA-Z]+","[0-9.]+"]
+        rm_list = []   #store the index of the text matched by regular expressing
+        pattern = ["[0-9a-zA-Z\_]+[@]{1,1}[0-9a-zA-Z]+", "www.[0-9a-zA-Z.]+","[0-9a-zA-Z.]+.com","[0-9]{1,2}:[0-9]{2}","[a-zA-Z0-9.&]+"]
         for i in range(len(pattern)):
             tmp = re.finditer(pattern[i],text)
             for group in tmp:
@@ -36,7 +37,6 @@ class IMM(object):
         return rm_list
 
     def cut(self,text,max_len):
-        magic_word=["这个","一个","不是","一次","这是"]
         rm_list = self.regular_match(text)
         res = []
         beginp = len(text)-max_len
@@ -54,7 +54,7 @@ class IMM(object):
                 else:
                     margin = endp - tokenp[1]
                     for i in range(margin,0,-1):
-                        if text[endp-i:endp] in self.dic[i] and text[endp-i:endp] not in magic_word:
+                        if text[endp-i:endp] in self.dic[i] and text[endp-i:endp] not in self.magic_word:
                             res.append(text[endp-i:endp]+" ")
                             endp -= i
                             break
@@ -63,7 +63,7 @@ class IMM(object):
                             endp -= i
             else:
                 for i in range(max_len,0,-1):
-                    if text[endp-i:endp] in self.dic[i] and text[endp-i:endp] not in magic_word:
+                    if text[endp-i:endp] in self.dic[i] and text[endp-i:endp] not in self.magic_word:
                         res.append(text[endp-i:endp]+" ")
                         endp -= i
                         break
@@ -71,7 +71,7 @@ class IMM(object):
                         res.append(text[endp-i:endp]+" ")
                         endp -= i
         res.reverse()
-        for i in range(len(res)):
+        '''for i in range(len(res)):
             if res[i] == "@ " and i+3<len(res) and len(res[i+1])==2 and len(res[i+2])==2 and len(res[i+3])==2:
                 res[i+1] = res[i+1].strip()+res[i+2].strip()+res[i+3]
                 res[i+2:i+4] = []
@@ -79,9 +79,10 @@ class IMM(object):
             elif res[i] == "@ " and i+2<len(res) and len(res[i+1])==2 and len(res[i+2])==2:
                 res[i+1] = res[i+1].strip()+res[i+2]
                 res[i+2:i+3] = []
-                break
+                break'''
         i = 0
         res_final = []
+        '''find Chinese name'''
         while True:
             if i>=len(res):
                 break
