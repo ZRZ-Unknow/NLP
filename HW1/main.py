@@ -88,8 +88,8 @@ def main_loop():
         if mw in train_data_set:
             magic_word.remove(mw)
     magic_word = sorted(magic_word)
-    magic_word = set(magic_word[:760])     
-    #750:0.909647,760:0.911281,700:0.908953,所:0.912802,800:0.912510,780:0.912328,770:0.912250
+    print(len(magic_word))
+    magic_word = set(magic_word)     
 
     '''algorithm''' 
     alg = []

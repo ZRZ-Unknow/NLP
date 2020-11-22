@@ -1,3 +1,3 @@
-HW1/cws_dataset/pku_training.txt
-HW1/cws_dataset/jieba-cut.txt
-*.txt
+HW1/cws_dataset
+*.pyc
+HW2/data/result

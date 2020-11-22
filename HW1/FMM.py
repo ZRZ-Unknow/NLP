@@ -70,15 +70,6 @@ class FMM(object):
                     if i==1:
                         res.append(text[beginp:beginp+i]+" ")
                         beginp += i
-        '''for i in range(len(res)):
-            if res[i] == "@ " and i+3<len(res) and len(res[i+1])==2 and len(res[i+2])==2 and len(res[i+3])==2:
-                res[i+1] = res[i+1].strip()+res[i+2].strip()+res[i+3]
-                res[i+2:i+4] = []
-                break
-            elif res[i] == "@ " and i+2<len(res) and len(res[i+1])==2 and len(res[i+2])==2:
-                res[i+1] = res[i+1].strip()+res[i+2]
-                res[i+2:i+3] = []
-                break'''
 
         i = 0
         res_final = []
