@@ -6,7 +6,7 @@ for dr in ${drops[@]}
 do
   for atdr in ${atdrops[@]}
   do
-    python main.py --seed 5 --lr 2e-5 --weight_decay 0.0004 --dropout $dr --num_iters 12 --max_len 85 \
-    --attention_probs_dropout_prob $atdr
+    python main.py --seed 5 --lr 2e-5 --weight_decay 0.0004 --dropout 0.06 --num_iters 12 --max_len 85 \
+    --attention_probs_dropout_prob $atdr --hidden_dropout_prob $dr
   done
 done

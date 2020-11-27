@@ -34,34 +34,30 @@ class DataBuffer(object):
             for i in range(0, len(train_rawdata), 3):
                 sentence = train_rawdata[i]
                 aspect = train_rawdata[i+1]
-                tag = train_rawdata[i+2]
+                label = train_rawdata[i+2]
                 sentence = sentence.replace('$T$',aspect).lower()
                 tmp = '[CLS] ' + sentence + ' [SEP] ' + aspect + ' [SEP]'
-                sequence = np.array(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(tmp)),dtype='int64')  #将tokens转换为词表里的id
+                sequence = np.array(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(tmp)),dtype='int64') 
                 s_len = sequence.shape[0]
                 concat_segments_indeces = np.zeros(s_len,dtype='int64')
                 concat_segments_indeces[-2:] = 1
                 sequence = cut(sequence, args.max_len)
                 concat_segments_indeces = cut(concat_segments_indeces, args.max_len)
-                #sequence = np.hstack([sequence,np.zeros(args.max_len-s_len)])
-                #concat_segments_indeces = np.hstack([concat_segments_indeces,np.zeros(args.max_len-s_len)])  
                 train_input1.append(sequence)
                 train_input2.append(concat_segments_indeces)
-                train_output.append(int(tag)+1)
+                train_output.append(int(label)+1)
             test_input1, test_input2 = [], []
             for i in range(0, len(test_rawdata), 2):
                 sentence = test_rawdata[i]
                 aspect = test_rawdata[i+1]
                 sentence = sentence.replace('$T$',aspect).lower()
                 tmp = '[CLS] ' + sentence + ' [SEP] ' + aspect + ' [SEP]'
-                sequence = np.array(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(tmp)),dtype='int64')  #将tokens转换为词表里的id
+                sequence = np.array(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(tmp)),dtype='int64')
                 s_len = sequence.shape[0]
                 concat_segments_indeces = np.zeros(s_len,dtype='int64')
                 concat_segments_indeces[-2:] = 1
                 sequence = cut(sequence, args.max_len)
                 concat_segments_indeces = cut(concat_segments_indeces, args.max_len)
-                #sequence = np.hstack([sequence,np.zeros(args.max_len-s_len)])
-                #concat_segments_indeces = np.hstack([concat_segments_indeces,np.zeros(args.max_len-s_len)])  
                 test_input1.append(sequence)
                 test_input2.append(concat_segments_indeces)
             return np.array(train_input1), np.array(train_input2), np.array(train_output),\
@@ -69,7 +65,7 @@ class DataBuffer(object):
         train_input1, train_input2, train_output, test_input1, test_input2 = process_data(args)
         self.train_input1 = train_input1
         self.train_input2 = train_input2
-        self.train_target = train_output       #[0,1,2]
+        self.train_target = train_output       
         self.test_input1 = test_input1
         self.test_input2 = test_input2
         self.train_N = self.train_input1.shape[0]
