@@ -75,10 +75,11 @@ class DataBuffer(object):
         return self.train_N
 
     def shuffle(self):
-        sampled_index = np.random.randint(0, self.train_N, self.train_N)
-        self.train_input1 = self.train_input1[sampled_index]
-        self.train_input2 = self.train_input2[sampled_index]
-        self.train_target = self.train_target[sampled_index]
+        tmp = np.arange(0,self.train_input1.shape[0])
+        np.random.shuffle(tmp)
+        self.train_input1 = self.train_input1[tmp]
+        self.train_input2 = self.train_input2[tmp]
+        self.train_target = self.train_target[tmp]
 
     def get_train_data(self, begin, end, device=None):
         if end > self.train_N: 
