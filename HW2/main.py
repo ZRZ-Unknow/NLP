@@ -7,15 +7,14 @@ from torch.utils.data import DataLoader, random_split
 from transformers import BertModel,BertConfig
 import utils
 from model import BERT_Model
-#seed 5, lr 2e-05, wd 0.0004, iter 5, dropout 0.06, atdropout 0.07, hiddendropout 0.06,0.9015384615384615
-#seed 5, lr 2e-05, wd 0.0004, iter 7, dropout 0.06, atdropout 0.11, hiddendropout 0.09, acc on test data 0.9061538461538462
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='./data',help='data path')
-    parser.add_argument('--num_iters', type=int, default=5,help='iter nums of outer loop')
+    parser.add_argument('--num_iters', type=int, default=8,help='iter nums of outer loop')
     parser.add_argument('--seed', type=int, default=5, help='seed')
     parser.add_argument('--batch_size', type=int, default=16, help='batch size per minibatch')
-    parser.add_argument('--dropout',type=float,default=0.09,help='dropout prob in final layer')
+    parser.add_argument('--dropout',type=float,default=0.06,help='dropout prob in final layer')
     parser.add_argument('--output_dim',type=int,default=3)
     parser.add_argument('--max_len',type=int,default=85,help='max lenth of word vector')
     parser.add_argument('--gpu_index',type=int,default=0)
@@ -25,8 +24,8 @@ def parse_args():
     '''bert config'''
     parser.add_argument('--hidden_size',type=int,default=768)
     parser.add_argument('--hidden_act',type=str,default='gelu')
-    parser.add_argument('--hidden_dropout_prob',type=float,default=0.1,help='hidden dropout prob in pretrained bert model')
-    parser.add_argument('--attention_probs_dropout_prob',type=float,default=0.12,help='attention dropout prob in pretrained bert model')
+    parser.add_argument('--hidden_dropout_prob',type=float,default=0.09,help='hidden dropout prob in pretrained bert model')
+    parser.add_argument('--attention_probs_dropout_prob',type=float,default=0.11,help='attention dropout prob in pretrained bert model')
     parser.add_argument('--layer_norm_eps',type=float,default=1e-12)
     args = parser.parse_args()
     return args
@@ -38,11 +37,11 @@ def set_lr(lr, optimizer):
 def weights_init_(Net):
     for child in Net.children():
         if type(child) != BertModel and isinstance(child, nn.Linear):
-                torch.nn.init.xavier_uniform_(child.weight)
-                std = 1.0/math.sqrt(child.bias.shape[0])
-                torch.nn.init.uniform_(child.bias, a=-std,b=std)
+            torch.nn.init.xavier_uniform_(child.weight)
+            std = 1.0/math.sqrt(child.bias.shape[0])
+            torch.nn.init.uniform_(child.bias, a=-std,b=std)
 
-def evaluate(args, data_buffer, bert_model, test_label, res_dire, device, i_iter):
+def predict(args, data_buffer, bert_model, res_dire, device):
     test_input_ids , test_token_type_ids = data_buffer.get_test_data(device=device)
     n = int(test_input_ids.shape[0]/args.batch_size)
     pred_result = []
@@ -58,11 +57,7 @@ def evaluate(args, data_buffer, bert_model, test_label, res_dire, device, i_iter
         t = list(pred_tag.cpu().data.numpy())
         pred_result += t
     pred_result = np.array(pred_result)
-    acc = (pred_result==test_label).mean()
-    print("seed {}, lr {}, wd {}, iter {}, dropout {}, atdropout {}, hiddendropout {}, acc on test data {}".format(args.seed,args.lr,\
-          args.weight_decay,i_iter,args.dropout, args.attention_probs_dropout_prob, args.hidden_dropout_prob, acc))
-    np.savetxt(res_dire+"/result_iter{}_{:.6f}.txt".format(i_iter,acc),pred_result-1,fmt='%i')
-
+    np.savetxt(res_dire+"/181220076.txt",pred_result-1,fmt='%i')
 
 def main_loop():
     args = parse_args()
@@ -76,19 +71,9 @@ def main_loop():
         torch.cuda.set_device(args.gpu_index)
 
     timestamp = time.strftime("%Y-%m-%dT%H:%M:%S",time.localtime())
-    res_dire = args.data_path+"/result/"+timestamp
+    res_dire = args.data_path+"/result"#+timestamp
     if not os.path.exists(res_dire):
         os.makedirs(res_dire)
-    with open(res_dire+"/detail.txt",'w',encoding='utf-8') as f:
-        f.write('lr:'+str(args.lr)+'\nweight_decay:'+str(args.weight_decay)+'\ndrop_out:'+str(args.dropout))
-        f.write('\nseed:'+str(args.seed)+'\nbatch_size:'+str(args.batch_size)+'\nmaxlen:'+str(args.max_len))
-        f.write('\natdropout:'+str(args.attention_probs_dropout_prob)+'\nhidden_dropout:'+str(args.hidden_dropout_prob))
-    with open('./data/test_with_label.txt','r',encoding='utf-8') as f:
-        test_with_label = f.read().split('\n')
-    test_label = []
-    for i in range(0, len(test_with_label)-1, 3):
-        test_label.append(int(test_with_label[i+2])+1)    #[0,1,2]
-    test_label = np.array(test_label) 
     
     data_buffer = utils.DataBuffer(args)
     config = BertConfig(hidden_act=args.hidden_act, hidden_dropout_prob=args.hidden_dropout_prob, \
@@ -115,9 +100,7 @@ def main_loop():
             optimizer.step()
         epoch_loss /= n
         print("iter {},loss {}".format(i_iter, epoch_loss))
-        if i_iter>0 and i_iter%args.eval_freq==0:
-            evaluate(args,data_buffer,bert_model,test_label,res_dire, device, i_iter)
-    evaluate(args,data_buffer,bert_model,test_label,res_dire, device, args.num_iters)
+    predict(args, data_buffer, bert_model, res_dire, device)
     
 
 if __name__=='__main__':

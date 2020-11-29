@@ -18,6 +18,7 @@ def load_rawdata(args):
     return train_data, test_data
 
 def cut(s, max_len):
+    '''normalize s into lenth max_len'''
     res = np.zeros(max_len).astype('int64')
     tmp = s[:max_len]
     tmp = np.asarray(tmp,dtype='int64')
@@ -39,12 +40,12 @@ class DataBuffer(object):
                 tmp = '[CLS] ' + sentence + ' [SEP] ' + aspect + ' [SEP]'
                 sequence = np.array(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(tmp)),dtype='int64') 
                 s_len = sequence.shape[0]
-                concat_segments_indeces = np.zeros(s_len,dtype='int64')
-                concat_segments_indeces[-2:] = 1
+                segments_indeces = np.zeros(s_len,dtype='int64')
+                segments_indeces[-2:] = 1
                 sequence = cut(sequence, args.max_len)
-                concat_segments_indeces = cut(concat_segments_indeces, args.max_len)
+                segments_indeces = cut(segments_indeces, args.max_len)
                 train_input1.append(sequence)
-                train_input2.append(concat_segments_indeces)
+                train_input2.append(segments_indeces)
                 train_output.append(int(label)+1)
             test_input1, test_input2 = [], []
             for i in range(0, len(test_rawdata), 2):
@@ -54,12 +55,12 @@ class DataBuffer(object):
                 tmp = '[CLS] ' + sentence + ' [SEP] ' + aspect + ' [SEP]'
                 sequence = np.array(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(tmp)),dtype='int64')
                 s_len = sequence.shape[0]
-                concat_segments_indeces = np.zeros(s_len,dtype='int64')
-                concat_segments_indeces[-2:] = 1
+                segments_indeces = np.zeros(s_len,dtype='int64')
+                segments_indeces[-2:] = 1
                 sequence = cut(sequence, args.max_len)
-                concat_segments_indeces = cut(concat_segments_indeces, args.max_len)
+                segments_indeces = cut(segments_indeces, args.max_len)
                 test_input1.append(sequence)
-                test_input2.append(concat_segments_indeces)
+                test_input2.append(segments_indeces)
             return np.array(train_input1), np.array(train_input2), np.array(train_output),\
                    np.array(test_input1), np.array(test_input2)
         train_input1, train_input2, train_output, test_input1, test_input2 = process_data(args)
