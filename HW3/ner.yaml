@@ -1,0 +1,22 @@
+model_params:
+  char_embed: 128
+  word_dropout: 0.05
+  char_dropout: 0.00
+  num_filters: 256
+  kernel_size: 3
+  hidden_size: 256
+  layers: 2
+  lstm_dropout: 0.20
+
+exp_params:
+  seed: 0
+  batch_size: 32
+  epoch: 200
+  save_res_freq: 3
+  device: "cuda:0"
+  lr: 0.001
+  l2: 0.
+  max_grad_norm: 5
+  raw_data_path: "./data/"
+  embed_path: "./data/word_vec_genia.pkl"
+  word2vec_path: "./data/PubMed-shuffle-win-2.bin"
