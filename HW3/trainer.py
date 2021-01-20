@@ -32,9 +32,8 @@ class Trainer(object):
     def generate_test_result(self, model, epoch, test_data, test_index):
         generate_test_result(model, epoch, self.res_path+f'/epoch{epoch}.txt', test_data, test_index, self.device,self.voc_iv_dict, self.voc_ooev_dict, self.label_dict)
 
-    def generate_best_test_result(self, test_data, test_index):
-        print(f"best epoch:{self.best_epoch}, best dev f1 score:{self.best_f1}")
-        generate_test_result(self.best_model, self.best_epoch, self.res_path+f'/181220076.txt', test_data, test_index, self.device,self.voc_iv_dict, self.voc_ooev_dict, self.label_dict)
+    def generate_best_test_result(self, model, epoch, test_data, test_index):
+        generate_test_result(model, epoch, self.res_path+f'/181220076.txt', test_data, test_index, self.device,self.voc_iv_dict, self.voc_ooev_dict, self.label_dict)
 
     def train(self, train_all_data, dev_data, test_data, test_index, optimizer, model, total_epoch):
         best_model, best_f1 = None, 0
@@ -63,6 +62,6 @@ class Trainer(object):
         
             print(f"Epoch{epoch} finished, loss: {train_err/train_total:.2f}, time: {time.time()-start_time:.2f}s")
             self.stat(model, epoch, dev_data)
-            if epoch % self.save_res_freq == 0:
-                self.generate_test_result(model, epoch, test_data, test_index)
-        self.generate_best_test_result(test_data, test_index)
+            if epoch == total_epoch-1:
+                self.generate_best_test_result(model, epoch, test_data, test_index)
+                print("Save test result!")

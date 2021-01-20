@@ -11,11 +11,11 @@ model_params:
 exp_params:
   seed: 0
   batch_size: 32
-  epoch: 200
-  save_res_freq: 3
+  epoch: 96
+  save_res_freq: 1
   device: "cuda:0"
   lr: 0.001
-  l2: 0.
+  l2: 0.0003
   max_grad_norm: 5
   raw_data_path: "./data/"
   embed_path: "./data/word_vec_genia.pkl"

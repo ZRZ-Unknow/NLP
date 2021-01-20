@@ -45,7 +45,6 @@ ner_model = generate_ner_model(config['model_params'], token_embed, voc_iv_dict.
                                char_dict.size(),label_dict.size(), embedd_word)
 ner_model.to(device)
 
-#optimizer = AdaBound(filter(lambda p: p.requires_grad, ner_model.parameters()), lr=config['exp_params']['lr'], weight_decay=config['exp_params']['l2'])
 optimizer = Adam(filter(lambda p: p.requires_grad, ner_model.parameters()), lr=config['exp_params']['lr'], weight_decay=config['exp_params']['l2'])
 
 train_seq_label_data = [pack_target(ner_model, train_label_batch, train_mask_batch)

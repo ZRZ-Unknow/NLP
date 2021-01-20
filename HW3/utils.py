@@ -46,8 +46,6 @@ def stat(model, epoch, filepath, dev_data, device, voc_iv_dict, voc_ooev_dict, l
     with torch.no_grad():
         model.eval()
         pred_all, pred, recall_all, recall = 0, 0, 0, 0
-        gold_cross_num = 0
-        pred_cross_num = 0
         for token_iv_batch, token_ooev_batch, char_batch, label_batch, mask_batch in zip(*dev_data):
             token_iv_batch_var = torch.LongTensor(np.array(token_iv_batch)).to(device)
             token_ooev_batch_var = torch.LongTensor(np.array(token_ooev_batch)).to(device)
@@ -60,9 +58,6 @@ def stat(model, epoch, filepath, dev_data, device, voc_iv_dict, voc_ooev_dict, l
                                                    mask_batch_var)
             pred_entities = unpack_prediction(model, pred_sequence_entities)
             p_a, p, r_a, r = evaluate(label_batch, pred_entities)
-
-            gold_cross_num += 0
-            pred_cross_num += 0
 
             pred_all += p_a
             pred += p
@@ -82,8 +77,6 @@ def generate_test_result(model, epoch, filepath, test_data, test_index, device, 
         i = 0
         model.eval()
         pred_all, pred, recall_all, recall = 0, 0, 0, 0
-        gold_cross_num = 0
-        pred_cross_num = 0
         f = open(filepath, 'w')
         for token_iv_batch, token_ooev_batch, char_batch, label_batch, mask_batch in zip(*test_data):
             token_iv_batch_var = torch.LongTensor(np.array(token_iv_batch)).to(device)
@@ -93,9 +86,6 @@ def generate_test_result(model, epoch, filepath, test_data, test_index, device, 
             pred_sequence_entities = model.predict(token_iv_batch_var, token_ooev_batch_var, char_batch_var, mask_batch_var)
             pred_entities = unpack_prediction(model, pred_sequence_entities)
             p_a, p, r_a, r = evaluate(label_batch, pred_entities)
-
-            gold_cross_num += 0
-            pred_cross_num += 0
 
             pred_all += p_a
             pred += p
